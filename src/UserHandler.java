@@ -28,12 +28,24 @@ public class UserHandler implements HttpHandler {
                 }
             } else if (method.equals("POST") && path.equals("/users")) {
                 User user = gson.fromJson(new InputStreamReader(exchange.getRequestBody()), User.class);
+
+                if (!isValidEmail(user.email)) {
+                    sendResponse(exchange, 400, "{\"error\": \"Invalid email format\"}");
+                    return;
+                }
+
                 UserDAO.save(user);
                 sendResponse(exchange, 201, "{\"message\": \"User created\"}");
             } else if (method.equals("PUT") && path.matches("/users/\\d+")) {
                 int id = Integer.parseInt(path.substring("/users/".length()));
                 User user = gson.fromJson(new InputStreamReader(exchange.getRequestBody()), User.class);
                 user.id = id;
+
+                if (!isValidEmail(user.email)) {
+                    sendResponse(exchange, 400, "{\"error\": \"Invalid email format\"}");
+                    return;
+                }
+
                 UserDAO.update(user);
                 sendResponse(exchange, 200, "{\"message\": \"User updated\"}");
             } else if (method.equals("DELETE") && path.matches("/users/\\d+")) {
@@ -57,4 +69,14 @@ public class UserHandler implements HttpHandler {
         os.write(response.getBytes());
         os.close();
     }
+    private boolean isValidEmail(String email) {
+        String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
+        return email != null && email.matches(regex);
+    }
+
+
+
+
+
+
 }
